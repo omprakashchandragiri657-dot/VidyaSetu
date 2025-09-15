@@ -76,7 +76,6 @@ class FacultyProfileInline(admin.StackedInline):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    inlines = (StudentProfileInline, FacultyProfileInline)
     list_display = ['email', 'username', 'college', 'role', 'is_student', 'is_faculty',
                      'is_active', 'created_at']
     list_filter = ['college', 'role', 'is_student', 'is_faculty',
@@ -109,6 +108,18 @@ class UserAdmin(BaseUserAdmin):
     )
 
     readonly_fields = ['created_at', 'updated_at', 'last_login', 'date_joined']
+
+    def get_inlines(self, request, obj=None):
+        """Return inlines based on the user's role"""
+        if obj:
+            if obj.role == 'student':
+                return [StudentProfileInline]
+            elif obj.role in ['faculty', 'hod', 'principal']:
+                return [FacultyProfileInline]
+        else:
+            # For add form, show both inlines, JS will hide based on role
+            return [StudentProfileInline, FacultyProfileInline]
+        return []
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -170,8 +181,8 @@ class StudentProfileAdmin(admin.ModelAdmin):
 
 @admin.register(FacultyProfile)
 class FacultyProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'employee_id', 'department', 'designation']
-    list_filter = ['department', 'designation', 'created_at']
+    list_display = ['user', 'employee_id', 'department', 'phone_number', 'office_location']
+    list_filter = ['department', 'phone_number', 'office_location', 'created_at']
     search_fields = ['user__email', 'user__first_name', 'user__last_name', 'employee_id']
     ordering = ['employee_id']
 
