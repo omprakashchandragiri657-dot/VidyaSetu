@@ -63,7 +63,6 @@ class Command(BaseCommand):
                 email='admin@example.com',
                 username='admin',
                 password='admin123',
-                college=college1,
                 first_name='Admin',
                 last_name='User'
             )

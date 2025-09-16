@@ -12,42 +12,42 @@ class IsPrincipal(permissions.BasePermission):
     """Custom permission to only allow principals."""
     
     def has_permission(self, request, view):
-        return request.user and request.user.role == 'principal'
+        return request.user and request.user.is_authenticated and request.user.role == 'principal'
 
 
 class IsHOD(permissions.BasePermission):
     """Custom permission to only allow HODs."""
     
     def has_permission(self, request, view):
-        return request.user and request.user.role == 'hod'
+        return request.user and request.user.is_authenticated and request.user.role == 'hod'
 
 
 class IsFaculty(permissions.BasePermission):
     """Custom permission to allow faculty and above."""
     
     def has_permission(self, request, view):
-        return request.user and request.user.role in ['faculty', 'hod', 'principal']
+        return request.user and request.user.is_authenticated and request.user.role in ['faculty', 'hod', 'principal']
 
 
 class IsStudent(permissions.BasePermission):
     """Custom permission to only allow students."""
     
     def has_permission(self, request, view):
-        return request.user and request.user.role == 'student'
+        return request.user and request.user.is_authenticated and request.user.role == 'student'
 
 
 class IsStaffOrStudent(permissions.BasePermission):
     """Custom permission to allow staff (faculty, HOD, principal) or students."""
     
     def has_permission(self, request, view):
-        return request.user and request.user.role in ['student', 'faculty', 'hod', 'principal']
+        return request.user and request.user.is_authenticated and request.user.role in ['student', 'faculty', 'hod', 'principal']
 
 
 class CanManageCollege(permissions.BasePermission):
     """Permission to manage college (superuser or principal of that college)."""
     
     def has_permission(self, request, view):
-        if not request.user:
+        if not request.user or not request.user.is_authenticated:
             return False
         
         if request.user.is_superuser:
@@ -60,7 +60,7 @@ class CanManageDepartment(permissions.BasePermission):
     """Permission to manage department (superuser, principal, or HOD of that department)."""
     
     def has_permission(self, request, view):
-        if not request.user:
+        if not request.user or not request.user.is_authenticated:
             return False
         
         if request.user.is_superuser:
@@ -76,7 +76,7 @@ class CanManageStudents(permissions.BasePermission):
     """Permission to manage students (superuser, principal, HOD, or faculty)."""
     
     def has_permission(self, request, view):
-        if not request.user:
+        if not request.user or not request.user.is_authenticated:
             return False
         
         if request.user.is_superuser:
@@ -89,7 +89,7 @@ class CanApproveAchievements(permissions.BasePermission):
     """Permission to approve achievements (superuser, principal, HOD, or faculty)."""
     
     def has_permission(self, request, view):
-        if not request.user:
+        if not request.user or not request.user.is_authenticated:
             return False
         
         if request.user.is_superuser:
@@ -102,7 +102,7 @@ class CanApprovePermissions(permissions.BasePermission):
     """Permission to approve permission requests (superuser, principal, HOD, or faculty)."""
     
     def has_permission(self, request, view):
-        if not request.user:
+        if not request.user or not request.user.is_authenticated:
             return False
         
         if request.user.is_superuser:
@@ -116,7 +116,7 @@ class IsOwnerOrStaff(permissions.BasePermission):
     
     def has_object_permission(self, request, view, obj):
         # Staff can access any object
-        if request.user.role in ['principal', 'hod', 'faculty']:
+        if request.user and request.user.is_authenticated and request.user.role in ['principal', 'hod', 'faculty']:
             return True
         
         # Users can access their own objects

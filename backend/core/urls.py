@@ -5,6 +5,8 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from . import views
+from .views_auth import UserLoginView, AdminLoginView
+from .views_principal import EventListCreateView, EventDetailView, PrincipalDashboardView
 
 # Create a router for API endpoints
 router = DefaultRouter()
@@ -13,6 +15,11 @@ urlpatterns = [
     # JWT Authentication endpoints
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # User login endpoint
+    path('login/', UserLoginView.as_view(), name='user-login'),
+    # Admin login endpoint
+    path('admin-login/', AdminLoginView.as_view(), name='admin-login'),
     
     # College endpoints
     path('colleges/', views.CollegeListView.as_view(), name='college-list'),
@@ -60,4 +67,9 @@ urlpatterns = [
     
     # Include router URLs
     path('', include(router.urls)),
+
+    # Principal portal endpoints
+    path('principal/events/', EventListCreateView.as_view(), name='principal-event-list-create'),
+    path('principal/events/<int:pk>/', EventDetailView.as_view(), name='principal-event-detail'),
+    path('principal/dashboard/', PrincipalDashboardView.as_view(), name='principal-dashboard'),
 ]

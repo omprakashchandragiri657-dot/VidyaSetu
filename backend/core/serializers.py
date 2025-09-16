@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest
+from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest, Event
 
 
 class CollegeSerializer(serializers.ModelSerializer):
@@ -224,6 +224,21 @@ class AchievementSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'status', 'approved_by_name', 'approved_at', 'rejection_reason', 'created_at', 'updated_at']
+
+
+class EventSerializer(serializers.ModelSerializer):
+    """Serializer for Event model"""
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    college_name = serializers.CharField(source='college.name', read_only=True)
+    
+    class Meta:
+        model = Event
+        fields = [
+            'id', 'name', 'description', 'start_date', 'end_date', 'target_years', 'target_departments',
+            'circular_photo', 'created_by', 'created_by_name', 'college', 'college_name', 'status',
+            'approved_by', 'approved_at', 'rejection_reason', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_by_name', 'college_name', 'status', 'approved_by', 'approved_at', 'rejection_reason', 'created_at', 'updated_at']
 
 
 class AchievementCreateSerializer(serializers.ModelSerializer):
