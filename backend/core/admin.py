@@ -181,10 +181,14 @@ class StudentProfileAdmin(admin.ModelAdmin):
 
 @admin.register(FacultyProfile)
 class FacultyProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'employee_id', 'department', 'phone_number', 'office_location']
-    list_filter = ['department', 'phone_number', 'office_location', 'created_at']
+    list_display = ['user', 'employee_id', 'department', 'user_role', 'phone_number', 'office_location']
+    list_filter = ['department', 'user__role', 'phone_number', 'office_location', 'created_at']
     search_fields = ['user__email', 'user__first_name', 'user__last_name', 'employee_id']
     ordering = ['employee_id']
+
+    def user_role(self, obj):
+        return obj.user.get_role_display()
+    user_role.short_description = 'Role'
 
 
 @admin.register(PermissionRequest)

@@ -273,8 +273,8 @@ class PermissionRequest(models.Model):
     request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default="other")
     title = models.CharField(max_length=200)
     description = models.TextField()
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     supporting_documents = models.FileField(
         upload_to="permissions/",
         validators=[FileExtensionValidator(allowed_extensions=["pdf", "jpg", "jpeg", "png", "doc", "docx"])],
