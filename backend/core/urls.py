@@ -6,7 +6,8 @@ from rest_framework_simplejwt.views import (
 )
 from . import views
 from .views_auth import UserLoginView, AdminLoginView
-from .views_principal import EventListCreateView, EventDetailView, PrincipalDashboardView
+from .views_principal import EventListCreateView, EventDetailView, PrincipalDashboardView, PrincipalDashboardTemplateView, approve_event_permission_request
+from .views import HODListView, HODCreateView, HODDetailView, FacultyListView, FacultyCreateView, FacultyDetailView
 
 # Create a router for API endpoints
 router = DefaultRouter()
@@ -17,7 +18,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # User login endpoint
-    path('login/', UserLoginView.as_view(), name='user-login'),
+    path('user-login/', UserLoginView.as_view(), name='user-login'),
     # Admin login endpoint
     path('admin-login/', AdminLoginView.as_view(), name='admin-login'),
     
@@ -72,4 +73,16 @@ urlpatterns = [
     path('principal/events/', EventListCreateView.as_view(), name='principal-event-list-create'),
     path('principal/events/<int:pk>/', EventDetailView.as_view(), name='principal-event-detail'),
     path('principal/dashboard/', PrincipalDashboardView.as_view(), name='principal-dashboard'),
+    path('dashboard/', PrincipalDashboardTemplateView.as_view(), name='principal-dashboard-template'),
+    path('principal/event-permission-requests/<int:request_id>/approve/', approve_event_permission_request, name='approve-event-permission-request'),
+
+    # HOD management endpoints
+    path('hods/', views.HODListView.as_view(), name='hod-list'),
+    path('hods/create/', views.HODCreateView.as_view(), name='hod-create'),
+    path('hods/<int:pk>/', views.HODDetailView.as_view(), name='hod-detail'),
+
+    # Faculty management endpoints
+    path('faculty/', views.FacultyListView.as_view(), name='faculty-list'),
+    path('faculty/create/', views.FacultyCreateView.as_view(), name='faculty-create'),
+    path('faculty/<int:pk>/', views.FacultyDetailView.as_view(), name='faculty-detail'),
 ]

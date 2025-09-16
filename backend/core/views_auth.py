@@ -1,10 +1,19 @@
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
 from django.views import View
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 
 class UserLoginView(View):
@@ -21,15 +30,14 @@ class UserLoginView(View):
             if user.is_superuser:
                 return redirect('admin-login')
             login(request, user)
-            # Redirect based on user role
-            if user.role == 'principal':
-                return redirect('principal-dashboard')
-            elif user.role == 'student':
-                return redirect('student-profile-detail')
-            elif user.role in ['faculty', 'hod']:
-                return redirect('faculty-profile-detail')
-            else:
-                return redirect('user-detail')  # Fallback to user details
+            tokens = get_tokens_for_user(user)
+            response = redirect('principal-dashboard' if user.role == 'principal' else
+                                'student-profile-detail' if user.role == 'student' else
+                                'faculty-profile-detail' if user.role in ['faculty', 'hod'] else
+                                'user-detail')
+            response.set_cookie('access_token', tokens['access'], httponly=True)
+            response.set_cookie('refresh_token', tokens['refresh'], httponly=True)
+            return response
         return render(request, self.template_name, {'form': form, 'error': 'Invalid credentials'})
 
 

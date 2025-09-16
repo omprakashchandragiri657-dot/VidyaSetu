@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest, Event
+from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest, Event, EventPermissionRequest
 
 
 class CollegeSerializer(serializers.ModelSerializer):
@@ -260,17 +260,31 @@ class AchievementCreateSerializer(serializers.ModelSerializer):
 
 class AchievementUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating achievement status (for faculty)"""
-    
+
     class Meta:
         model = Achievement
         fields = ['status', 'rejection_reason']
-    
+
     def update(self, instance, validated_data):
         from django.utils import timezone
-        
+
         # Set approval information
         if validated_data.get('status') in ['approved', 'rejected']:
             instance.approved_by = self.context['request'].user
             instance.approved_at = timezone.now()
-        
+
         return super().update(instance, validated_data)
+
+
+class EventPermissionRequestSerializer(serializers.ModelSerializer):
+    """Serializer for EventPermissionRequest model"""
+    event_name = serializers.CharField(source='event.name', read_only=True)
+    requested_by_name = serializers.CharField(source='requested_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = EventPermissionRequest
+        fields = [
+            'id', 'event', 'event_name', 'requested_by', 'requested_by_name', 'status',
+            'approved_by', 'approved_at', 'rejection_reason', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'approved_by', 'approved_at', 'created_at', 'updated_at']

@@ -345,6 +345,31 @@ class Event(models.Model):
             self.approved_at = timezone.now()
         super().save(*args, **kwargs)
 
+        # Create permission request if created by HOD
+        if self.created_by.role == 'hod' and not hasattr(self, 'permission_request'):
+            EventPermissionRequest.objects.create(
+                event=self,
+                requested_by=self.created_by
+            )
+
+
+class EventPermissionRequest(models.Model):
+    """Model for event permission requests from HOD to principal"""
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="permission_request")
+    requested_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_permission_requests")
+    status = models.CharField(max_length=10, choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='pending')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_event_requests")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Event Permission Request for {self.event.name} by {self.requested_by.get_full_name()}"
+
 
 class Notification(models.Model):
     """Model for notifications sent to users"""

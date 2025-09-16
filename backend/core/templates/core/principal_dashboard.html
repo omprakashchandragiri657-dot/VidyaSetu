@@ -1,0 +1,297 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Principal Dashboard - VidyaSetu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Principal Dashboard</h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-user-tie"></i> HODs</h5>
+                <h2>{{ hods|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Faculty</h5>
+                <h2>{{ faculty|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-calendar-alt"></i> Events</h5>
+                <h2>{{ events|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-clipboard-list"></i> Pending Permissions</h5>
+                <h2>{{ permissions|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HODs Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-tie"></i> Heads of Department</h5>
+                <a href="{% url 'hod-management' %}" class="btn btn-primary btn-sm">Manage HODs</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hod in hods %}
+                            <tr>
+                                <td>{{ hod.first_name }} {{ hod.last_name }}</td>
+                                <td>{{ hod.email }}</td>
+                                <td>{{ hod.department.name }}</td>
+                                <td>
+                                    <a href="{% url 'hod-detail' hod.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No HODs found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Faculty Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chalkboard-teacher"></i> Faculty Members</h5>
+                <a href="{% url 'faculty-management' %}" class="btn btn-primary btn-sm">Manage Faculty</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Designation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for faculty_member in faculty %}
+                            <tr>
+                                <td>{{ faculty_member.first_name }} {{ faculty_member.last_name }}</td>
+                                <td>{{ faculty_member.email }}</td>
+                                <td>{{ faculty_member.department.name }}</td>
+                                <td>{{ faculty_member.faculty_profile.designation|default:"N/A" }}</td>
+                                <td>
+                                    <a href="{% url 'faculty-detail' faculty_member.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No faculty members found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Events Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-calendar-alt"></i> Events</h5>
+                <a href="{% url 'event-management' %}" class="btn btn-primary btn-sm">Manage Events</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td>{{ event.name }}</td>
+                                <td>{{ event.description|truncatechars:50 }}</td>
+                                <td>{{ event.start_date|date:"M d, Y" }}</td>
+                                <td>{{ event.end_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if event.status == 'approved' %}success{% elif event.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                        {{ event.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ event.created_by.get_full_name }}</td>
+                                <td>
+                                    <a href="{% url 'event-detail' event.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    {% if event.status == 'pending' %}
+                                    <button class="btn btn-sm btn-success" onclick="approveEvent({{ event.id }})">Approve</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No events found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permission Requests Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clipboard-list"></i> Permission Requests</h5>
+                <a href="{% url 'permission-requests' %}" class="btn btn-primary btn-sm">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Requested Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for permission in permissions %}
+                            <tr>
+                                <td>{{ permission.student.user.get_full_name }}</td>
+                                <td>{{ permission.get_request_type_display }}</td>
+                                <td>{{ permission.title }}</td>
+                                <td>
+                                    <span class="badge bg-{% if permission.status == 'approved' %}success{% elif permission.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                        {{ permission.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ permission.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'permission-detail' permission.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    {% if permission.status == 'pending' %}
+                                    <button class="btn btn-sm btn-success" onclick="approvePermission({{ permission.id }})">Approve</button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectPermission({{ permission.id }})">Reject</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No permission requests found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function approveEvent(eventId) {
+    if (confirm('Are you sure you want to approve this event?')) {
+        fetch(`/api/principal/events/${eventId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            },
+            body: JSON.stringify({ status: 'approved' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            location.reload();
+        });
+    }
+}
+
+function approvePermission(permissionId) {
+    const reason = prompt('Enter approval reason (optional):');
+    fetch(`/api/permission-requests/${permissionId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({ status: 'approved', rejection_reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        location.reload();
+    });
+}
+
+function rejectPermission(permissionId) {
+    const reason = prompt('Enter rejection reason:');
+    if (reason) {
+        fetch(`/api/permission-requests/${permissionId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            },
+            body: JSON.stringify({ status: 'rejected', rejection_reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            location.reload();
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -251,7 +251,7 @@ class EventAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'description', 'start_date', 'end_date', 'target_years', 'target_departments', 'circular_photo')
+            'fields': ('name', 'description', 'start_date', 'end_date', 'target_years', 'target_departments', 'circular_photo', 'college', 'created_by')
         }),
         ('Approval Information', {
             'fields': ('status', 'approved_by', 'approved_at', 'rejection_reason')

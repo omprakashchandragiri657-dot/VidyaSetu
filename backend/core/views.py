@@ -466,24 +466,94 @@ def approve_permission_request(request, permission_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class HODListView(generics.ListAPIView):
+    """API view to list HODs in the college"""
+    serializer_class = UserSerializer
+    permission_classes = [IsPrincipal]
+
+    def get_queryset(self):
+        user = self.request.user
+        return User.objects.filter(role='hod', college=user.college)
+
+
+class HODCreateView(generics.CreateAPIView):
+    """API view for creating HODs (principal only)"""
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [IsPrincipal]
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class HODDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """API view for HOD details (principal only)"""
+    serializer_class = UserSerializer
+    permission_classes = [IsPrincipal]
+
+    def get_queryset(self):
+        user = self.request.user
+        return User.objects.filter(role='hod', college=user.college)
+
+
+class FacultyListView(generics.ListAPIView):
+    """API view to list faculty in college/department"""
+    serializer_class = UserSerializer
+    permission_classes = [IsPrincipal, IsHOD]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'principal':
+            return User.objects.filter(role='faculty', college=user.college)
+        elif user.role == 'hod':
+            return User.objects.filter(role='faculty', department=user.department)
+        return User.objects.none()
+
+
+class FacultyCreateView(generics.CreateAPIView):
+    """API view for creating faculty (principal or HOD)"""
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [IsPrincipal, IsHOD]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role == 'hod':
+            # Ensure the department is the HOD's department
+            serializer.validated_data['department_id'] = user.department.id
+        serializer.save()
+
+
+class FacultyDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """API view for faculty details (principal or HOD)"""
+    serializer_class = UserSerializer
+    permission_classes = [IsPrincipal, IsHOD]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'principal':
+            return User.objects.filter(role='faculty', college=user.college)
+        elif user.role == 'hod':
+            return User.objects.filter(role='faculty', department=user.department)
+        return User.objects.none()
+
+
 @api_view(['GET'])
 @permission_classes([IsStudent])
 def download_portfolio(request):
     """API view for students to download their portfolio PDF"""
     student_profile = request.user.student_profile
-    
+
     # Generate PDF
     try:
         pdf_content = generate_student_portfolio(student_profile)
-        
+
         # Create filename
         filename = f"{student_profile.student_id}_portfolio.pdf"
-        
+
         # Return PDF response
         return create_pdf_response(pdf_content, filename)
-        
+
     except Exception as e:
         return Response(
-            {'error': f'Failed to generate portfolio: {str(e)}'}, 
+            {'error': f'Failed to generate portfolio: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
