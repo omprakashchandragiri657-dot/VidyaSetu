@@ -80,7 +80,8 @@ class Command(BaseCommand):
                 college=college1,
                 role='principal',
                 first_name='Dr. Alice',
-                last_name='Johnson'
+                last_name='Johnson',
+                is_staff=True
             )
             college1.principal = principal_user
             college1.save()
@@ -104,7 +105,8 @@ class Command(BaseCommand):
                 role='hod',
                 department=dept_cse,
                 first_name='Prof. Bob',
-                last_name='Williams'
+                last_name='Williams',
+                is_staff=True
             )
             dept_cse.hod = hod_user
             dept_cse.save()

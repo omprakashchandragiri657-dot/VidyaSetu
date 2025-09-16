@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .managers import TenantManager, AchievementManager
 
 
@@ -296,3 +297,65 @@ class PermissionRequest(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.student.user.get_full_name()} ({self.status})"
+
+
+class Event(models.Model):
+    """Model for college events created by HOD or Principal"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    target_years = models.JSONField(default=list, help_text="List of student years, e.g., [1, 2, 3]")
+    target_departments = models.ManyToManyField(Department, related_name="events", blank=True)
+    circular_photo = models.ImageField(upload_to="events/", blank=True, null=True, help_text="Upload hard copy circular photo (optional)")
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="created_events",
+        limit_choices_to={'role__in': ['hod', 'principal']}
+    )
+    college = models.ForeignKey(College, on_delete=models.CASCADE, related_name="events")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_events",
+        limit_choices_to={'role': 'principal'}
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} - {self.college.name} ({self.status})"
+
+    def save(self, *args, **kwargs):
+        if not self.college_id and self.created_by.college:
+            self.college = self.created_by.college
+        if self.created_by.role == 'principal':
+            self.status = 'approved'
+            self.approved_by = self.created_by
+            self.approved_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class Notification(models.Model):
+    """Model for notifications sent to users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.get_full_name()}"

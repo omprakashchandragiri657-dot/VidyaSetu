@@ -3,8 +3,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from django.core.exceptions import PermissionDenied
 
-from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest
+from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest, Event, Notification
 
 
 # ------------------ Utility: Generate Student PDF ------------------
@@ -238,3 +239,95 @@ class AchievementAdmin(admin.ModelAdmin):
         if hasattr(request, 'current_college') and request.current_college:
             return qs.filter(student__user__college=request.current_college)
         return qs
+
+
+# ------------------ Event Admin ------------------
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ['name', 'start_date', 'end_date', 'status', 'created_by', 'college']
+    list_filter = ['status', 'start_date', 'end_date', 'college', 'target_departments']
+    search_fields = ['name', 'description']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'description', 'start_date', 'end_date', 'target_years', 'target_departments', 'circular_photo')
+        }),
+        ('Approval Information', {
+            'fields': ('status', 'approved_by', 'approved_at', 'rejection_reason')
+        }),
+        ('Timestamps', {'fields': ('created_at', 'updated_at')}),
+    )
+
+    readonly_fields = ['created_at', 'updated_at', 'approved_at']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        user = request.user
+        if user.is_superuser:
+            return qs
+        if user.role == 'principal':
+            return qs.filter(college=user.college)
+        if user.role == 'hod':
+            return qs.filter(created_by=user) | qs.filter(college=user.college, status='approved')
+        return qs.none()
+
+    def has_add_permission(self, request):
+        user = request.user
+        return user.is_superuser or user.role in ['hod', 'principal']
+
+    def has_change_permission(self, request, obj=None):
+        user = request.user
+        if user.is_superuser:
+            return True
+        if obj:
+            if user.role == 'principal' and obj.college == user.college:
+                return True
+            if user.role == 'hod' and obj.created_by == user:
+                return True
+        return False
+
+    def save_model(self, request, obj, form, change):
+        user = request.user
+        if not change:  # Creating
+            obj.created_by = user
+        if change and 'status' in form.changed_data:
+            if obj.status == 'approved' and not obj.approved_by:
+                obj.approved_by = user
+                obj.approved_at = timezone.now()
+                self.create_notifications(obj)
+            elif obj.status == 'rejected':
+                obj.approved_by = user
+        super().save_model(request, obj, form, change)
+
+    def create_notifications(self, event):
+        from .models import StudentProfile, Notification
+        # Get target students
+        students = StudentProfile.objects.filter(
+            user__college=event.college,
+            department__in=event.target_departments.all(),
+            year_of_admission__in=event.target_years
+        ).select_related('user')
+        # Get HODs of target departments
+        hods = User.objects.filter(
+            role='hod',
+            department__in=event.target_departments.all()
+        )
+        recipients = set(students.values_list('user', flat=True)) | set(hods.values_list('pk', flat=True))
+        for user_id in recipients:
+            Notification.objects.create(
+                user_id=user_id,
+                title=f"New Event: {event.name}",
+                message=f"Event from {event.start_date} to {event.end_date}. {event.description}"
+            )
+
+
+# ------------------ Notification Admin ------------------
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['title', 'user', 'is_read', 'created_at']
+    list_filter = ['is_read', 'created_at']
+    search_fields = ['title', 'message', 'user__email']
+    ordering = ['-created_at']
+
+    readonly_fields = ['created_at']
