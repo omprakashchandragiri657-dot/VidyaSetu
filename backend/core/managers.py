@@ -44,7 +44,12 @@ class TenantManager(BaseUserManager):
         extra_fields.setdefault("role", "hod")
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("department", department)
-        return self.create_user(email, username, college, password, **extra_fields)
+        user = self.create_user(email, username, college, password, **extra_fields)
+        # Set department.hod to this user
+        if department:
+            department.hod = user
+            department.save()
+        return user
     
     def create_faculty(self, email, username, college, department, password=None, **extra_fields):
         """Create a faculty user"""

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest, Event, EventPermissionRequest
+from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest, Event, EventPermissionRequest, Subject
 
 
 class CollegeSerializer(serializers.ModelSerializer):
@@ -39,6 +39,18 @@ class DepartmentSerializer(serializers.ModelSerializer):
         return obj.faculty.count()
 
 
+class SubjectSerializer(serializers.ModelSerializer):
+    """Serializer for Subject model"""
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    college_name = serializers.CharField(source='department.college.name', read_only=True)
+
+    class Meta:
+        model = Subject
+        fields = ['id', 'name', 'code', 'department', 'department_name', 'college_name',
+                 'semester', 'credits', 'created_at']
+        read_only_fields = ['created_at']
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -54,14 +66,27 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
-        
+
         role = attrs.get('role')
         department_id = attrs.get('department_id')
-        
+        college_id = attrs.get('college_id')
+
         # Validate department is required for certain roles
         if role in ['hod', 'faculty'] and not department_id:
             raise serializers.ValidationError(f"Department is required for {role} role")
-        
+
+        # Validate uniqueness: only one principal per college
+        if role == 'principal':
+            college = College.objects.get(id=college_id)
+            if college.principal:
+                raise serializers.ValidationError("A principal already exists for this college")
+
+        # Validate uniqueness: only one HOD per department
+        if role == 'hod':
+            department = Department.objects.get(id=department_id)
+            if department.hod:
+                raise serializers.ValidationError("A HOD already exists for this department")
+
         return attrs
     
     def validate_college_id(self, value):

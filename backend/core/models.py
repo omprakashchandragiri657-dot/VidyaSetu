@@ -57,6 +57,26 @@ class Department(models.Model):
         return f"{self.name} ({self.college.name})"
 
 
+class Subject(models.Model):
+    """Subject model for courses taught by faculty"""
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10)  # e.g., "CS101", "MATH201"
+    department = models.ForeignKey(
+        Department, on_delete=models.CASCADE, related_name="subjects"
+    )
+    semester = models.IntegerField(null=True, blank=True)  # Optional semester info
+    credits = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ["code", "department"]
+
+    def __str__(self):
+        return f"{self.name} ({self.code}) - {self.department.name}"
+
+
 class User(AbstractUser):
     """Custom User model with hierarchical roles and college association"""
     ROLE_CHOICES = [
@@ -189,6 +209,9 @@ class FacultyProfile(models.Model):
     employee_id = models.CharField(max_length=50)
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE, related_name="faculty", null=True, blank=True
+    )
+    subjects = models.ManyToManyField(
+        "Subject", related_name="faculty_members", blank=True
     )
     phone_number = models.CharField(max_length=15, blank=True)
     office_location = models.CharField(max_length=100, blank=True)
