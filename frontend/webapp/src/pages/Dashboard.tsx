@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import StudentAchievements from '../components/StudentAchievements';
 import StudentPortal from './StudentPortal';
 import PrincipalDashboard from '../components/PrincipalDashboard';
@@ -10,8 +11,21 @@ import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === 'principal') {
+      navigate('/principal/dashboard');
+    }
+  }, [user, navigate]);
 
   if (!user) return <div className="loading">Loading...</div>;
+
+  // If user is a principal, this will be a brief flash before redirecting.
+  // Or we can show a loading spinner until redirection is complete.
+  if (user.role === 'principal') {
+    return <div className="loading">Redirecting to Principal Dashboard...</div>;
+  }
 
   return (
     <div className="dashboard-container">
@@ -25,7 +39,7 @@ const Dashboard: React.FC = () => {
           {user.role === 'student' && <StudentDashboard />}
           {user.role === 'faculty' && <FacultyDashboard />}
           {user.role === 'hod' && <HODDashboard />}
-          {user.role === 'principal' && <PrincipalDashboard />}
+          {/* Principal is handled by redirect now */}
         </div>
       </div>
     </div>

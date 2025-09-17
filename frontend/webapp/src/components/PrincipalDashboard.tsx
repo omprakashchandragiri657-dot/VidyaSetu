@@ -1,265 +1,142 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
-interface StudentFormData {
-  email: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-  password: string;
-  student_id: string;
-  year_of_admission: number;
-  course: string;
-  branch: string;
-  department_id: number;
-  phone_number: string;
-  date_of_birth: string;
+// --- Helper Components ---
+
+const StatCard: React.FC<{ title: string; value: number | string; icon: React.ReactNode }> = ({ title, value, icon }) => (
+  <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+    <div className="bg-light-gray p-3 rounded-full">
+      {icon}
+    </div>
+    <div>
+      <p className="text-slate-gray text-sm font-medium">{title}</p>
+      <p className="text-3xl font-bold text-deep-blue">{value}</p>
+    </div>
+  </div>
+);
+
+const CreateButton: React.FC = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const actions = [
+      { label: 'Create Event', link: '/principal/events/new' },
+      { label: 'Create Department', link: '/principal/departments/new' },
+      { label: 'Create HOD', link: '/principal/hods/new' },
+      { label: 'Create Faculty', link: '/principal/faculty/new' },
+      { label: 'Create Student', link: '/principal/students/new' },
+    ];
+
+    return (
+      <div className="fixed bottom-10 right-10">
+        {isOpen && (
+          <div className="bg-white rounded-lg shadow-lg py-2 mb-2">
+            <ul>
+              {actions.map(action => (
+                <li key={action.label}>
+                  <Link to={action.link} className="block px-4 py-2 text-slate-gray hover:bg-light-gray">
+                    {action.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-saffron-orange text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition-transform"
+        >
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        </button>
+      </div>
+    );
+};
+
+// --- Main Dashboard Component ---
+
+interface DashboardStats {
+  total_hods: number;
+  total_faculty: number;
+  total_students: number;
+  total_events: number;
 }
 
-interface College {
+interface Department {
   id: number;
   name: string;
   code: string;
-  address: string;
-  contact_email: string;
-  contact_phone: string;
-  principal: number;
-}
-
-interface Event {
-  id: number;
-  name: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-}
-
-interface User {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  role: string;
 }
 
 const PrincipalDashboard: React.FC = () => {
-  const [college, setCollege] = useState<College | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [hods, setHods] = useState<User[]>([]);
-  const [faculty, setFaculty] = useState<User[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showStudentForm, setShowStudentForm] = useState(false);
-  const [studentForm, setStudentForm] = useState<StudentFormData>({
-    email: '',
-    username: '',
-    first_name: '',
-    last_name: '',
-    password: '',
-    student_id: '',
-    year_of_admission: new Date().getFullYear(),
-    course: '',
-    branch: '',
-    department_id: 0,
-    phone_number: '',
-    date_of_birth: '',
-  });
 
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Using placeholder data until the API is ready
+        const placeholderStats: DashboardStats = {
+          total_hods: 12,
+          total_faculty: 75,
+          total_students: 1200,
+          total_events: 25,
+        };
+        const placeholderDepartments: Department[] = [
+            { id: 1, name: 'Computer Science', code: 'CSE' },
+            { id: 2, name: 'Mechanical Engineering', code: 'ME' },
+            { id: 3, name: 'Electronics & Communication', code: 'ECE' },
+            { id: 4, name: 'Civil Engineering', code: 'CE' },
+        ]
+
+        setStats(placeholderStats);
+        setDepartments(placeholderDepartments);
+
+        // const [statsRes, deptsRes] = await Promise.all([
+        //   api.get('/api/principal/dashboard/'),
+        //   api.get('/api/departments/')
+        // ]);
+        // setStats(statsRes.data);
+        // setDepartments(deptsRes.data);
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      const [collegeRes, eventsRes, hodsRes, facultyRes] = await Promise.all([
-        api.get('colleges/'),
-        api.get('principal/events/'),
-        api.get('hods/'),
-        api.get('faculty/'),
-      ]);
-      setCollege(collegeRes.data[0]); // Assuming one college
-      setEvents(eventsRes.data);
-      setHods(hodsRes.data);
-      setFaculty(facultyRes.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStudentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setStudentForm(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const userData = {
-        email: studentForm.email,
-        username: studentForm.username,
-        first_name: studentForm.first_name,
-        last_name: studentForm.last_name,
-        password: studentForm.password,
-        college_id: college?.id,
-        department_id: studentForm.department_id,
-        role: 'student',
-      };
-      const userResponse = await api.post('register/', userData);
-      const studentData = {
-        student_id: studentForm.student_id,
-        year_of_admission: studentForm.year_of_admission,
-        course: studentForm.course,
-        branch: studentForm.branch,
-        department_id: studentForm.department_id,
-        phone_number: studentForm.phone_number,
-        date_of_birth: studentForm.date_of_birth,
-      };
-      await api.post('student-profile/', studentData);
-      alert('Student created successfully');
-      setShowStudentForm(false);
-      setStudentForm({
-        email: '',
-        username: '',
-        first_name: '',
-        last_name: '',
-        password: '',
-        student_id: '',
-        year_of_admission: new Date().getFullYear(),
-        course: '',
-        branch: '',
-        department_id: 0,
-        phone_number: '',
-        date_of_birth: '',
-      });
-    } catch (error) {
-      console.error('Error creating student:', error);
-      alert('Failed to create student');
-    }
-  };
-
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return <div className="text-center p-8">Loading dashboard...</div>;
+  }
 
   return (
     <div>
-      <h3>Principal Dashboard</h3>
-      <div>
-        <h4>College Information</h4>
-        {college && (
-          <div>
-            <p>Name: {college.name}</p>
-            <p>Code: {college.code}</p>
-            <p>Address: {college.address}</p>
-            <p>Email: {college.contact_email}</p>
-            <p>Phone: {college.contact_phone}</p>
-          </div>
-        )}
+      {/* Top Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard title="Total HODs" value={stats?.total_hods ?? 0} icon={<svg className="w-6 h-6 text-deep-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-5.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-5.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>} />
+        <StatCard title="Total Faculty" value={stats?.total_faculty ?? 0} icon={<svg className="w-6 h-6 text-deep-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>} />
+        <StatCard title="Total Students" value={stats?.total_students ?? 0} icon={<svg className="w-6 h-6 text-deep-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-4a6 6 0 00-12 0v4"></path></svg>} />
+        <StatCard title="Total Events" value={stats?.total_events ?? 0} icon={<svg className="w-6 h-6 text-deep-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>} />
       </div>
-      <div>
-        <h4>Events</h4>
-        <ul>
-          {events.map(event => (
-            <li key={event.id}>
-              {event.name} - {event.status}
-            </li>
+
+      {/* Departments Section */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-bold text-deep-blue mb-4">Departments</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {departments.map(dept => (
+            <Link to={`/principal/departments/${dept.id}`} key={dept.id} className="block p-4 border rounded-lg hover:shadow-lg hover:border-deep-blue transition-shadow">
+              <h3 className="font-semibold text-deep-blue">{dept.name}</h3>
+              <p className="text-sm text-slate-gray">{dept.code}</p>
+            </Link>
           ))}
-        </ul>
+        </div>
       </div>
-      <div>
-        <h4>HODs</h4>
-        <ul>
-          {hods.map(hod => (
-            <li key={hod.id}>
-              {hod.first_name} {hod.last_name} - {hod.email}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4>Faculty</h4>
-        <ul>
-          {faculty.map(f => (
-            <li key={f.id}>
-              {f.first_name} {f.last_name} - {f.email}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <button onClick={() => setShowStudentForm(!showStudentForm)}>
-          {showStudentForm ? 'Hide' : 'Add New Student'}
-        </button>
-        {showStudentForm && (
-          <form onSubmit={handleCreateStudent}>
-            <h4>Create New Student</h4>
-            <label>
-              Email:
-              <input type="email" name="email" value={studentForm.email} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Username:
-              <input type="text" name="username" value={studentForm.username} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              First Name:
-              <input type="text" name="first_name" value={studentForm.first_name} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Last Name:
-              <input type="text" name="last_name" value={studentForm.last_name} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Password:
-              <input type="password" name="password" value={studentForm.password} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Student ID:
-              <input type="text" name="student_id" value={studentForm.student_id} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Year of Admission:
-              <input type="number" name="year_of_admission" value={studentForm.year_of_admission} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Course:
-              <input type="text" name="course" value={studentForm.course} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Branch:
-              <input type="text" name="branch" value={studentForm.branch} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Department ID:
-              <input type="number" name="department_id" value={studentForm.department_id} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Phone Number:
-              <input type="text" name="phone_number" value={studentForm.phone_number} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Date of Birth:
-              <input type="date" name="date_of_birth" value={studentForm.date_of_birth} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <button type="submit">Create Student</button>
-          </form>
-        )}
-      </div>
+
+      <CreateButton />
     </div>
   );
 };
