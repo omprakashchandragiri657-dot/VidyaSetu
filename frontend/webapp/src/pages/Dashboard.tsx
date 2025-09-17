@@ -5,23 +5,29 @@ import StudentPortal from './StudentPortal';
 import PrincipalDashboard from '../components/PrincipalDashboard';
 import HODDashboard from '../components/HODDashboard';
 import FacultyDashboard from '../components/FacultyDashboard';
+import Navbar from '../components/Navbar';
+import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
-  if (!user) return <div>Loading...</div>;
+  if (!user) return <div className="loading">Loading...</div>;
 
   return (
-    <div>
-      <h2>Dashboard</h2>
-      <p>Welcome, {user.first_name} {user.last_name}</p>
-      <p>Role: {user.role}</p>
-      <button onClick={logout}>Logout</button>
-      {/* Render different components based on role */}
-      {user.role === 'student' && <StudentDashboard />}
-      {user.role === 'faculty' && <FacultyDashboard />}
-      {user.role === 'hod' && <HODDashboard />}
-      {user.role === 'principal' && <PrincipalDashboard />}
+    <div className="dashboard-container">
+      <Navbar />
+      <div className="dashboard-content">
+        <div className="dashboard-header">
+          <h2>Dashboard</h2>
+        </div>
+        <div className="dashboard-body">
+          {/* Render different components based on role */}
+          {user.role === 'student' && <StudentDashboard />}
+          {user.role === 'faculty' && <FacultyDashboard />}
+          {user.role === 'hod' && <HODDashboard />}
+          {user.role === 'principal' && <PrincipalDashboard />}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,0 +1,17 @@
+:root {
+  /* Primary Palette */
+  --color-deep-blue: #1E3A8A;
+  --color-saffron-orange: #F97316;
+  --color-leaf-green: #22C55E;
+  --color-soft-white: #F9FAFB;
+  --color-slate-gray: #475569;
+  --color-black: #000000;
+
+  /* Usage contexts */
+  --color-primary: var(--color-deep-blue);
+  --color-accent-cta: var(--color-saffron-orange);
+  --color-accent-success: var(--color-leaf-green);
+  --color-background: var(--color-soft-white);
+  --color-text-primary: var(--color-black);
+  --color-text-secondary: var(--color-slate-gray);
+}

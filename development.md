@@ -195,3 +195,26 @@ Acceptance Criteria:
  * A student can click the download button.
  * A PDF file is successfully generated and downloaded by the browser.
  * The PDF contains a correctly formatted list of all the student's approved achievements.
+ 🎨 Primary Palette (Tri-Color + Neutral)
+
+Deep Blue (#1E3A8A) → Trust, knowledge, reliability (main academic color)
+
+Saffron Orange (#F97316) → Energy, innovation, call-to-action buttons
+
+Leaf Green (#22C55E) → Growth, approval, success states
+
+Soft White (#F9FAFB) → Clean background
+
+Slate Gray (#475569) → Neutral text/secondary
+
+🌈 Usage Guide
+
+Primary (Blue): Navbar, buttons, links
+
+Accent (Orange): CTAs, highlights, login button
+
+Accent (Green): Success states (approved request, verified, etc.)
+
+Background (White/Gray): Main UI background
+
+Text (Slate Gray/Black): For high readability
