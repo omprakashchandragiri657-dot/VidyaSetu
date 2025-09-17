@@ -6,6 +6,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.db.models import Q
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import College, Department, User, StudentProfile, FacultyProfile, Achievement, PermissionRequest
 from .serializers import (
     CollegeSerializer, DepartmentSerializer, UserRegistrationSerializer, UserSerializer,
@@ -534,6 +535,58 @@ class FacultyDetailView(generics.RetrieveUpdateDestroyAPIView):
         elif user.role == 'hod':
             return User.objects.filter(role='faculty', department=user.department)
         return User.objects.none()
+
+
+class UserLoginAPIView(APIView):
+    """API view for user login (students, faculty, HOD, principal)"""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not username or not password:
+            return Response({'error': 'Username and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if user.is_superuser:
+            return Response({'error': 'Superusers should use admin login'}, status=status.HTTP_400_BAD_REQUEST)
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data
+        })
+
+
+class AdminLoginAPIView(APIView):
+    """API view for admin login (superusers only)"""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not username or not password:
+            return Response({'error': 'Username and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not user.is_superuser:
+            return Response({'error': 'Only superusers can access admin login'}, status=status.HTTP_403_FORBIDDEN)
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data
+        })
 
 
 @api_view(['GET'])

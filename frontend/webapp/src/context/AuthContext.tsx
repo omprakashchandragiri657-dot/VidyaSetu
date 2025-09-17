@@ -52,14 +52,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (username: string, password: string) => {
-    const response = await api.post('token/', { username, password });
-    const { access, refresh } = response.data;
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
-    // Fetch user details
-    const userResponse = await api.get('me/');
-    setUser(userResponse.data);
-    setIsAuthenticated(true);
+    // Determine if user is admin or normal user by a simple heuristic or separate login function
+    // For simplicity, try user-login first, then admin-login if needed
+
+    try {
+      // Try user login
+      const response = await api.post('user-login/', { username, password });
+      // On success, store tokens
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      // Fetch user details
+      const userResponse = await api.get('me/');
+      setUser(userResponse.data);
+      setIsAuthenticated(true);
+    } catch (userLoginError) {
+      try {
+        // Try admin login
+        const response = await api.post('admin-login/', { username, password });
+        // On success, store tokens
+        localStorage.setItem('access_token', response.data.access);
+        localStorage.setItem('refresh_token', response.data.refresh);
+        // Fetch user details
+        const userResponse = await api.get('me/');
+        setUser(userResponse.data);
+        setIsAuthenticated(true);
+      } catch (adminLoginError) {
+        throw new Error('Invalid credentials');
+      }
+    }
   };
 
   const register = async (userData: any) => {

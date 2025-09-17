@@ -5,7 +5,6 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from . import views
-from .views_auth import UserLoginView, AdminLoginView
 from .views_principal import EventListCreateView, EventDetailView, PrincipalDashboardView, PrincipalDashboardTemplateView, approve_event_permission_request
 from .views import HODListView, HODCreateView, HODDetailView, FacultyListView, FacultyCreateView, FacultyDetailView
 
@@ -18,9 +17,9 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # User login endpoint
-    path('user-login/', UserLoginView.as_view(), name='user-login'),
+    path('user-login/', views.UserLoginAPIView.as_view(), name='user-login'),
     # Admin login endpoint
-    path('admin-login/', AdminLoginView.as_view(), name='admin-login'),
+    path('admin-login/', views.AdminLoginAPIView.as_view(), name='admin-login'),
     
     # College endpoints
     path('colleges/', views.CollegeListView.as_view(), name='college-list'),

@@ -1,0 +1,144 @@
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+
+interface User {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+}
+
+interface Achievement {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  student: {
+    user: {
+      first_name: string;
+      last_name: string;
+    };
+  };
+}
+
+interface PermissionRequest {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  student: {
+    user: {
+      first_name: string;
+      last_name: string;
+    };
+  };
+}
+
+const HODDashboard: React.FC = () => {
+  const [faculty, setFaculty] = useState<User[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [facultyRes, achievementsRes, permissionsRes] = await Promise.all([
+        api.get('faculty/'),
+        api.get('achievements/pending/'),
+        api.get('permission-requests/pending/'),
+      ]);
+      setFaculty(facultyRes.data);
+      setAchievements(achievementsRes.data);
+      setPermissions(permissionsRes.data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approveAchievement = async (id: number) => {
+    try {
+      await api.post(`achievements/${id}/approve/`, { status: 'approved' });
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error approving achievement:', error);
+    }
+  };
+
+  const rejectAchievement = async (id: number) => {
+    try {
+      await api.post(`achievements/${id}/approve/`, { status: 'rejected' });
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error rejecting achievement:', error);
+    }
+  };
+
+  const approvePermission = async (id: number) => {
+    try {
+      await api.post(`permission-requests/${id}/approve/`, { status: 'approved' });
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error approving permission:', error);
+    }
+  };
+
+  const rejectPermission = async (id: number) => {
+    try {
+      await api.post(`permission-requests/${id}/approve/`, { status: 'rejected' });
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error rejecting permission:', error);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h3>HOD Dashboard</h3>
+      <div>
+        <h4>Faculty in Department</h4>
+        <ul>
+          {faculty.map(f => (
+            <li key={f.id}>
+              {f.first_name} {f.last_name} - {f.email}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h4>Pending Achievements</h4>
+        <ul>
+          {achievements.map(achievement => (
+            <li key={achievement.id}>
+              {achievement.title} - {achievement.student.user.first_name} {achievement.student.user.last_name}
+              <button onClick={() => approveAchievement(achievement.id)}>Approve</button>
+              <button onClick={() => rejectAchievement(achievement.id)}>Reject</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h4>Pending Permission Requests</h4>
+        <ul>
+          {permissions.map(permission => (
+            <li key={permission.id}>
+              {permission.title} - {permission.student.user.first_name} {permission.student.user.last_name}
+              <button onClick={() => approvePermission(permission.id)}>Approve</button>
+              <button onClick={() => rejectPermission(permission.id)}>Reject</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default HODDashboard;

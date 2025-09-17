@@ -1,6 +1,10 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import StudentAchievements from '../components/StudentAchievements';
+import StudentPortal from './StudentPortal';
+import PrincipalDashboard from '../components/PrincipalDashboard';
+import HODDashboard from '../components/HODDashboard';
+import FacultyDashboard from '../components/FacultyDashboard';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -28,35 +32,15 @@ const StudentDashboard: React.FC = () => {
       <h3>Student Dashboard</h3>
       <p>View achievements, submit new ones, request permissions.</p>
       <StudentAchievements />
+      <StudentPortal />
     </div>
   );
 };
 
-const FacultyDashboard: React.FC = () => {
-  return (
-    <div>
-      <h3>Faculty Dashboard</h3>
-      <p>Approve achievements and permissions.</p>
-    </div>
-  );
-};
 
-const HODDashboard: React.FC = () => {
-  return (
-    <div>
-      <h3>HOD Dashboard</h3>
-      <p>Manage faculty, approve requests.</p>
-    </div>
-  );
-};
 
-const PrincipalDashboard: React.FC = () => {
-  return (
-    <div>
-      <h3>Principal Dashboard</h3>
-      <p>Manage college, events, etc.</p>
-    </div>
-  );
-};
+
+
+
 
 export default Dashboard;
