@@ -97,7 +97,9 @@ const FacultyDashboard: React.FC = () => {
         <ul>
           {achievements.map(achievement => (
             <li key={achievement.id}>
-              {achievement.title} - {achievement.student.user.first_name} {achievement.student.user.last_name}
+              {achievement.title} - {achievement.student && achievement.student.user ? 
+                `${achievement.student.user.first_name || ''} ${achievement.student.user.last_name || ''}` : 
+                'Unknown Student'}
               <button onClick={() => approveAchievement(achievement.id)}>Approve</button>
               <button onClick={() => rejectAchievement(achievement.id)}>Reject</button>
             </li>
@@ -109,7 +111,9 @@ const FacultyDashboard: React.FC = () => {
         <ul>
           {permissions.map(permission => (
             <li key={permission.id}>
-              {permission.title} - {permission.student.user.first_name} {permission.student.user.last_name}
+              {permission.title} - {permission.student && permission.student.user ? 
+                `${permission.student.user.first_name || ''} ${permission.student.user.last_name || ''}` : 
+                'Unknown Student'}
               <button onClick={() => approvePermission(permission.id)}>Approve</button>
               <button onClick={() => rejectPermission(permission.id)}>Reject</button>
             </li>

@@ -4,7 +4,10 @@ const API_BASE_URL = 'http://localhost:8000/api/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: false, // Changed to false to avoid CORS issues with JWT
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // Helper function to get CSRF token from cookies

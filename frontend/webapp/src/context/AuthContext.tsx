@@ -44,9 +44,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       api.get('me/').then((response) => {
         setUser(response.data);
         setIsAuthenticated(true);
-      }).catch(() => {
+      }).catch((error) => {
+        console.error('Authentication error:', error);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        setIsAuthenticated(false);
       });
     }
   }, []);
