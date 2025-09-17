@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import academicIllustration from '../assets/academic-illustration.svg';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -21,38 +22,62 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <h1 className="title">VidyaSethu</h1>
-          <p className="subtitle">Education Management Portal</p>
+    <div className="login-page">
+      <div className="login-container">
+        <div className="illustration-container">
+          <img src={academicIllustration} alt="Academic Illustration" className="academic-illustration" />
         </div>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+        
+        <div className="login-form-container">
+          <div className="login-card">
+            <div className="login-header">
+              <h1>VidyaSethu</h1>
+              <p>Bridging Students, Faculty & Institutions</p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="form-group">
+                <label htmlFor="username">Email / Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  className="form-control"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  className="form-control"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+              
+              <div className="forgot-password">
+                <a href="#">Forgot Password?</a>
+              </div>
+              
+              {error && <div className="error-message">{error}</div>}
+              
+              <button type="submit" className="login-button">
+                Login
+              </button>
+            </form>
           </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          
+          <div className="login-footer">
+            <p>© 2025 VidyaSethu. All rights reserved.</p>
           </div>
-          {error && <div className="error-message">{error}</div>}
-          <button type="submit" className="login-button">Sign In</button>
-        </form>
+        </div>
       </div>
     </div>
   );
