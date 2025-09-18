@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import '../styles/buttons.css';
+import './StudentPortal.css';
 
 interface Event {
   id: number;
@@ -52,107 +54,159 @@ const StudentPortal: React.FC = () => {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        evidence_file: e.target.files![0],
-      }));
-    }
-  };
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files.length > 0) {
+    setFormData(prev => ({
+      ...prev,
+      evidence_file: e.target.files![0],
+    }));
+  }
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.event_id) {
-      setMessage('Please select an event.');
-      return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!formData.event_id) {
+    setMessage('Please select an event.');
+    return;
+  }
+  setLoading(true);
+  setMessage('');
+  try {
+    const data = new FormData();
+    data.append('title', formData.title);
+    data.append('description', formData.description);
+    data.append('category', formData.category);
+    data.append('date_achieved', formData.date_achieved);
+    if (formData.evidence_file) {
+      data.append('evidence_file', formData.evidence_file);
     }
-    setLoading(true);
-    setMessage('');
-    try {
-      const data = new FormData();
-      data.append('title', formData.title);
-      data.append('description', formData.description);
-      data.append('category', formData.category);
-      data.append('date_achieved', formData.date_achieved);
-      if (formData.evidence_file) {
-        data.append('evidence_file', formData.evidence_file);
-      }
-      data.append('event_id', formData.event_id.toString());
+    data.append('event_id', formData.event_id.toString());
 
-      await api.post('achievements/', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      setMessage('Achievement submitted successfully.');
-      setFormData({
-        title: '',
-        description: '',
-        category: 'academic',
-        date_achieved: '',
-        evidence_file: null,
-        event_id: null,
-      });
-    } catch (error) {
-      console.error('Error submitting achievement:', error);
-      setMessage('Failed to submit achievement.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    await api.post('achievements/', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    setMessage('Achievement submitted successfully.');
+    setFormData({
+      title: '',
+      description: '',
+      category: 'academic',
+      date_achieved: '',
+      evidence_file: null,
+      event_id: null,
+    });
+  } catch (error) {
+    console.error('Error submitting achievement:', error);
+    setMessage('Failed to submit achievement.');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  return (
-    <div>
-      <h2>Student Portal - Submit Achievement</h2>
-      {message && <p>{message}</p>}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Event:
-          <select name="event_id" value={formData.event_id ?? ''} onChange={handleChange} required>
-            <option value="" disabled>Select an event</option>
-            {events.map(event => (
-              <option key={event.id} value={event.id}>
-                {event.name} ({new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()})
-              </option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Title:
-          <input type="text" name="title" value={formData.title} onChange={handleChange} required />
-        </label>
-        <br />
-        <label>
-          Description:
-          <textarea name="description" value={formData.description} onChange={handleChange} required />
-        </label>
-        <br />
-        <label>
-          Category:
-          <select name="category" value={formData.category} onChange={handleChange} required>
-            <option value="academic">Academic</option>
-            <option value="sports">Sports</option>
-            <option value="cultural">Cultural</option>
-            <option value="other">Other</option>
-          </select>
-        </label>
-        <br />
-        <label>
-          Date Achieved:
-          <input type="date" name="date_achieved" value={formData.date_achieved} onChange={handleChange} required />
-        </label>
-        <br />
-        <label>
-          Evidence File:
-          <input type="file" name="evidence_file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
-        </label>
-        <br />
-        <button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Submit Achievement'}</button>
-      </form>
-    </div>
-  );
+return (
+  <div className="student-portal">
+    <h2>Student Portal - Submit Achievement</h2>
+    {message && <p className="message">{message}</p>}
+    <form onSubmit={handleSubmit} className="achievement-form">
+      <div className="form-group">
+        <label htmlFor="event_id">Event</label>
+        <select
+          id="event_id"
+          name="event_id"
+          value={formData.event_id ?? ''}
+          onChange={handleChange}
+          required
+          className="form-control"
+        >
+          <option value="" disabled>
+            Select an event
+          </option>
+          {events.map(event => (
+            <option key={event.id} value={event.id}>
+              {event.name} ({new Date(event.start_date).toLocaleDateString()} -{' '}
+              {new Date(event.end_date).toLocaleDateString()})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="title">Title</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          required
+          className="form-control"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="description">Description</label>
+        <textarea
+          id="description"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          className="form-control"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="category">Category</label>
+        <select
+          id="category"
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          required
+          className="form-control"
+        >
+          <option value="academic">Academic</option>
+          <option value="sports">Sports</option>
+          <option value="cultural">Cultural</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="date_achieved">Date Achieved</label>
+        <input
+          type="date"
+          id="date_achieved"
+          name="date_achieved"
+          value={formData.date_achieved}
+          onChange={handleChange}
+          required
+          className="form-control"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="evidence_file">Evidence File</label>
+        <input
+          type="file"
+          id="evidence_file"
+          name="evidence_file"
+          onChange={handleFileChange}
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          className="form-control"
+        />
+      </div>
+
+      <div className="form-actions">
+        <button type="submit" className="btn-cta" disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit Achievement'}
+        </button>
+      </div>
+    </form>
+  </div>
+);
 };
 
 export default StudentPortal;
+

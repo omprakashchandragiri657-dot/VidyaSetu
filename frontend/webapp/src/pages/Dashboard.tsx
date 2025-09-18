@@ -43,6 +43,8 @@ const StudentDashboard: React.FC = () => {
   );
 };
 
+export { StudentDashboard };
+
 
 
 

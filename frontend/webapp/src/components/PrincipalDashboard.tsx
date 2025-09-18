@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import '../styles/buttons.css';
+import './PrincipalDashboard.css';
 
 interface StudentFormData {
   email: string;
@@ -33,6 +35,12 @@ interface Event {
   start_date: string;
   end_date: string;
   status: string;
+  hod?: {
+    user: {
+      first_name: string;
+      last_name: string;
+    };
+  };
 }
 
 interface User {
@@ -142,124 +150,338 @@ const PrincipalDashboard: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const approveEvent = async (eventId: number) => {
+    try {
+      await api.post(`principal/events/${eventId}/approve/`, { status: 'approved' });
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error approving event:', error);
+      alert('Failed to approve event');
+    }
+  };
+
+  const rejectEvent = async (eventId: number) => {
+    try {
+      await api.post(`principal/events/${eventId}/approve/`, { status: 'rejected' });
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error rejecting event:', error);
+      alert('Failed to reject event');
+    }
+  };
+
+  const pendingEvents = events.filter(event => event.status === 'pending');
+
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <div>
-      <h3>Principal Dashboard</h3>
-      <div>
-        <h4>College Information</h4>
-        {college && (
-          <div>
-            <p>Name: {college.name}</p>
-            <p>Code: {college.code}</p>
-            <p>Address: {college.address}</p>
-            <p>Email: {college.contact_email}</p>
-            <p>Phone: {college.contact_phone}</p>
+    <div className="principal-dashboard">
+      <div className="dashboard-header">
+        <h2>Principal Dashboard</h2>
+        <p>Manage college information, events, and staff</p>
+      </div>
+
+      <div className="dashboard-grid">
+        <div className="dashboard-card">
+          <h3>College Information</h3>
+          {college && (
+            <div className="college-info">
+              <div className="info-item">
+                <strong>Name:</strong> {college.name}
+              </div>
+              <div className="info-item">
+                <strong>Code:</strong> {college.code}
+              </div>
+              <div className="info-item">
+                <strong>Address:</strong> {college.address}
+              </div>
+              <div className="info-item">
+                <strong>Email:</strong> {college.contact_email}
+              </div>
+              <div className="info-item">
+                <strong>Phone:</strong> {college.contact_phone}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="dashboard-card">
+          <h3>Events</h3>
+          <div className="list-container">
+            {events.length > 0 ? (
+              <ul className="item-list">
+                {events.map(event => (
+                  <li key={event.id} className="list-item">
+                    <div className="item-content">
+                      <span className="item-title">{event.name}</span>
+                      <span className={`status-badge ${event.status.toLowerCase()}`}>
+                        {event.status}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="no-data">No events found</p>
+            )}
           </div>
-        )}
+        </div>
+
+        <div className="dashboard-card">
+          <h3>HODs</h3>
+          <div className="list-container">
+            {hods.length > 0 ? (
+              <ul className="item-list">
+                {hods.map(hod => (
+                  <li key={hod.id} className="list-item">
+                    <div className="item-content">
+                      <span className="item-title">{hod.first_name} {hod.last_name}</span>
+                      <span className="item-subtitle">{hod.email}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="no-data">No HODs found</p>
+            )}
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <h3>Faculty</h3>
+          <div className="list-container">
+            {faculty.length > 0 ? (
+              <ul className="item-list">
+                {faculty.map(f => (
+                  <li key={f.id} className="list-item">
+                    <div className="item-content">
+                      <span className="item-title">{f.first_name} {f.last_name}</span>
+                      <span className="item-subtitle">{f.email}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="no-data">No faculty found</p>
+            )}
+          </div>
+        </div>
       </div>
-      <div>
-        <h4>Events</h4>
-        <ul>
-          {events.map(event => (
-            <li key={event.id}>
-              {event.name} - {event.status}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4>HODs</h4>
-        <ul>
-          {hods.map(hod => (
-            <li key={hod.id}>
-              {hod.first_name} {hod.last_name} - {hod.email}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4>Faculty</h4>
-        <ul>
-          {faculty.map(f => (
-            <li key={f.id}>
-              {f.first_name} {f.last_name} - {f.email}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <button onClick={() => setShowStudentForm(!showStudentForm)}>
-          {showStudentForm ? 'Hide' : 'Add New Student'}
+
+      {pendingEvents.length > 0 && (
+        <section className="dashboard-section">
+          <h3>Pending Event Approvals</h3>
+          <div className="list-container">
+            <ul className="item-list">
+              {pendingEvents.map(event => (
+                <li key={event.id} className="list-item">
+                  <div className="item-content">
+                    <div className="item-info">
+                      <span className="item-title">{event.name}</span>
+                      <span className="item-subtitle">
+                        {event.hod?.user?.first_name} {event.hod?.user?.last_name} - {new Date(event.start_date).toLocaleDateString()} to {new Date(event.end_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="action-buttons">
+                      <button className="btn-success" onClick={() => approveEvent(event.id)}>Approve</button>
+                      <button className="btn-secondary" onClick={() => rejectEvent(event.id)}>Reject</button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      <div className="dashboard-actions">
+        <button
+          className="btn-cta"
+          onClick={() => setShowStudentForm(!showStudentForm)}
+        >
+          {showStudentForm ? 'Hide Form' : 'Add New Student'}
         </button>
-        {showStudentForm && (
-          <form onSubmit={handleCreateStudent}>
-            <h4>Create New Student</h4>
-            <label>
-              Email:
-              <input type="email" name="email" value={studentForm.email} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Username:
-              <input type="text" name="username" value={studentForm.username} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              First Name:
-              <input type="text" name="first_name" value={studentForm.first_name} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Last Name:
-              <input type="text" name="last_name" value={studentForm.last_name} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Password:
-              <input type="password" name="password" value={studentForm.password} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Student ID:
-              <input type="text" name="student_id" value={studentForm.student_id} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Year of Admission:
-              <input type="number" name="year_of_admission" value={studentForm.year_of_admission} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Course:
-              <input type="text" name="course" value={studentForm.course} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Branch:
-              <input type="text" name="branch" value={studentForm.branch} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Department ID:
-              <input type="number" name="department_id" value={studentForm.department_id} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Phone Number:
-              <input type="text" name="phone_number" value={studentForm.phone_number} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <label>
-              Date of Birth:
-              <input type="date" name="date_of_birth" value={studentForm.date_of_birth} onChange={handleStudentFormChange} required />
-            </label>
-            <br />
-            <button type="submit">Create Student</button>
-          </form>
-        )}
       </div>
+
+      {showStudentForm && (
+        <div className="form-card">
+          <h3>Create New Student</h3>
+          <form onSubmit={handleCreateStudent} className="student-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={studentForm.email}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="username">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={studentForm.username}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="first_name">First Name</label>
+                <input
+                  type="text"
+                  id="first_name"
+                  name="first_name"
+                  value={studentForm.first_name}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="last_name">Last Name</label>
+                <input
+                  type="text"
+                  id="last_name"
+                  name="last_name"
+                  value={studentForm.last_name}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={studentForm.password}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="student_id">Student ID</label>
+                <input
+                  type="text"
+                  id="student_id"
+                  name="student_id"
+                  value={studentForm.student_id}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="year_of_admission">Year of Admission</label>
+                <input
+                  type="number"
+                  id="year_of_admission"
+                  name="year_of_admission"
+                  value={studentForm.year_of_admission}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="course">Course</label>
+                <input
+                  type="text"
+                  id="course"
+                  name="course"
+                  value={studentForm.course}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="branch">Branch</label>
+                <input
+                  type="text"
+                  id="branch"
+                  name="branch"
+                  value={studentForm.branch}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="department_id">Department ID</label>
+                <input
+                  type="number"
+                  id="department_id"
+                  name="department_id"
+                  value={studentForm.department_id}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="phone_number">Phone Number</label>
+                <input
+                  type="text"
+                  id="phone_number"
+                  name="phone_number"
+                  value={studentForm.phone_number}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="date_of_birth">Date of Birth</label>
+                <input
+                  type="date"
+                  id="date_of_birth"
+                  name="date_of_birth"
+                  value={studentForm.date_of_birth}
+                  onChange={handleStudentFormChange}
+                  required
+                  className="form-control"
+                />
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button type="submit" className="btn-success">Create Student</button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setShowStudentForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

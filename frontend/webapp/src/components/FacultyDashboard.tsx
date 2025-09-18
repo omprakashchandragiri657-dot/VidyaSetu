@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import '../styles/buttons.css';
+import './FacultyDashboard.css';
 
 interface Achievement {
   id: number;
@@ -87,39 +89,66 @@ const FacultyDashboard: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <div>
-      <h3>Faculty Dashboard</h3>
-      <div>
-        <h4>Pending Achievements</h4>
-        <ul>
-          {achievements.map(achievement => (
-            <li key={achievement.id}>
-              {achievement.title} - {achievement.student && achievement.student.user ? 
-                `${achievement.student.user.first_name || ''} ${achievement.student.user.last_name || ''}` : 
-                'Unknown Student'}
-              <button onClick={() => approveAchievement(achievement.id)}>Approve</button>
-              <button onClick={() => rejectAchievement(achievement.id)}>Reject</button>
-            </li>
-          ))}
-        </ul>
+    <div className="faculty-dashboard">
+      <div className="dashboard-header">
+        <h2>Faculty Dashboard</h2>
+        <p>Review and approve student achievements and permission requests</p>
       </div>
-      <div>
-        <h4>Pending Permission Requests</h4>
-        <ul>
-          {permissions.map(permission => (
-            <li key={permission.id}>
-              {permission.title} - {permission.student && permission.student.user ? 
-                `${permission.student.user.first_name || ''} ${permission.student.user.last_name || ''}` : 
-                'Unknown Student'}
-              <button onClick={() => approvePermission(permission.id)}>Approve</button>
-              <button onClick={() => rejectPermission(permission.id)}>Reject</button>
-            </li>
-          ))}
-        </ul>
-      </div>
+
+      <section className="dashboard-section">
+        <h3>Pending Achievements</h3>
+        {achievements.length > 0 ? (
+          <ul className="item-list">
+            {achievements.map(achievement => (
+              <li key={achievement.id} className="list-item">
+                <div className="item-content">
+                  <div className="item-info">
+                    <span className="item-title">{achievement.title}</span>
+                    <span className="item-subtitle">
+                      {achievement.student?.user?.first_name} {achievement.student?.user?.last_name}
+                    </span>
+                  </div>
+                  <div className="action-buttons">
+                    <button className="btn-success" onClick={() => approveAchievement(achievement.id)}>Approve</button>
+                    <button className="btn-secondary" onClick={() => rejectAchievement(achievement.id)}>Reject</button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="no-data">No pending achievements to review</p>
+        )}
+      </section>
+
+      <section className="dashboard-section">
+        <h3>Pending Permission Requests</h3>
+        {permissions.length > 0 ? (
+          <ul className="item-list">
+            {permissions.map(permission => (
+              <li key={permission.id} className="list-item">
+                <div className="item-content">
+                  <div className="item-info">
+                    <span className="item-title">{permission.title}</span>
+                    <span className="item-subtitle">
+                      {permission.student?.user?.first_name} {permission.student?.user?.last_name}
+                    </span>
+                  </div>
+                  <div className="action-buttons">
+                    <button className="btn-success" onClick={() => approvePermission(permission.id)}>Approve</button>
+                    <button className="btn-secondary" onClick={() => rejectPermission(permission.id)}>Reject</button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="no-data">No pending permission requests to review</p>
+        )}
+      </section>
     </div>
   );
 };
